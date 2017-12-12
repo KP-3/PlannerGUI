@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -12,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Planner {
+	static Vector state;
  static Vector operators;
  static Random rand;
  static Vector plan;
@@ -19,17 +23,171 @@ public class Planner {
  static ArrayList<String> doplan =new ArrayList<String>(); 
 static Hashtable re=new Hashtable();
 static ArrayList<String> name =new ArrayList<String>();
+static ArrayList<ArrayList<String>> namelist=new ArrayList<ArrayList<String>>();
  public static void main(String argv[]){
-  (new Planner()).start();
+  (new Planner()).start();/*
+  Vector c =initInitialStatefile("state.txt");
+  for(int i= 0;i<10;i++){
+  Vector b = plandoing(doplan.get(i),c);
+  System.out.println(doplan.get(i));
+  System.out.println(c);
+System.out.println(b);
+c = new Vector(b);
+  }*/
  }
 
  Planner(){
   rand = new Random();
  }
+
+ public static Vector plandoing(String plan1,Vector now){
+	 Vector re  = new Vector();
+		Pattern pat1 = Pattern.compile("Place (.+) on (.+)");
+		Matcher mat1 = pat1.matcher(plan1);
+		Pattern pat2 = Pattern.compile("remove (.+) from on top (.+)");
+		Matcher mat2 = pat2.matcher(plan1);
+		Pattern pat3 = Pattern.compile("pick up (.+) from the table");
+		Matcher mat3 = pat3.matcher(plan1);
+		Pattern pat4 = Pattern.compile("put (.+) down on the table");
+		Matcher mat4 = pat4.matcher(plan1);
+		if(mat1.find()){
+			String x =mat1.group(1);
+			String y =mat1.group(2);
+			String check = "clear "+y;
+			String check1= "holding "+x;
+			 for(int j = 0 ; j < now.size() ; j++){
+				 String a = (String)now.get(j);
+				 boolean flag = true;
+				 if(a.equals(check)){
+					 flag=false;
+				 }
+				 if(a.equals(check1)){
+					 flag=false;
+				 }
+				 if(flag){
+					 re.addElement(a);
+				 }
+			 }
+			 hold ="";
+			 for(int i =0; i < namelist.size();i++){
+				 ArrayList<String > memo = namelist.get(i);
+				 if(memo.contains(y)){
+					 memo.add(x);
+				 }
+				 namelist.remove(i);
+				 namelist.add(i,memo);
+			 }
+				re.addElement(x+" on "+y);
+				re.addElement("clear "+x);
+				re.addElement("handEmpty");
+		}
+		else if(mat2.find()){
+			String x =mat2.group(1);
+			String y =mat2.group(2);
+			String check =x+ " on "+y;
+			String check1= "clear "+x;
+			String check2 = "handEmpty";
+			 for(int j = 0 ; j < now.size() ; j++){
+				 String a = (String)now.get(j);
+				 boolean flag = true;
+				 if(a.equals(check)){
+					 flag=false;
+				 }
+				 if(a.equals(check1)){
+					 flag=false;
+				 }
+				 if(a.equals(check2)){
+					 flag=false;
+				 }
+				 if(flag){
+					 re.addElement(a);
+				 }
+			 }
+			 hold = y;
+			 for(int i =0; i < namelist.size();i++){
+				 ArrayList<String > memo = namelist.get(i);
+				 if(memo.contains(y)){
+					 for(int j =0; j <memo.size();j++){
+						String s = memo.get(j);
+						if(s.equals(x)){
+							memo.remove(j);
+						}
+					 }
+				 }
+				 namelist.remove(i);
+				 namelist.add(i,memo);
+			 }
+			re.addElement("clear "+y);
+			re.addElement("holding "+x);
+		}
+		else if(mat3.find()){
+			String x =mat3.group(1);
+			String check ="ontable "+x;
+			String check1= "clear "+x;
+			String check2 = "handEmpty";
+			 for(int j = 0 ; j < now.size() ; j++){
+				 String a = (String)now.get(j);
+				 boolean flag = true;
+				 if(a.equals(check)){
+					 flag=false;
+				 }
+				 if(a.equals(check1)){
+					 flag=false;
+				 }
+				 if(a.equals(check2)){
+					 flag=false;
+				 }
+				 if(flag){
+					 re.addElement(a);
+				 }
+			 }
+			 hold =x;
+			 for(int i =0; i < namelist.size();i++){
+				 ArrayList<String > memo = namelist.get(i);
+				 if(memo.contains(x)){
+					 memo.remove(0);
+				 }
+				 namelist.remove(i);
+				 namelist.add(i,memo);
+			 }
+			re.addElement("holding "+x);
+		}
+		else if(mat4.find()){
+			String x =mat4.group(1);
+			String check ="holding "+x;
+			 for(int j = 0 ; j < now.size() ; j++){
+				 String a = (String)now.get(j);
+				 boolean flag = true;
+				 if(a.equals(check)){
+					 flag=false;
+				 }
+				 if(flag){
+					 re.addElement(a);
+				 }
+			 }
+			 hold = "";
+			 for(int i =0; i < namelist.size();i++){
+				 ArrayList<String > memo = namelist.get(i);
+if(memo.size()==0){
+	memo.add(x);
+	 namelist.remove(i);
+	 namelist.add(i,memo);
+}
+			 }
+			re.addElement("ontable "+x);
+			re.addElement("clear "+x);
+			re.addElement("handEmpty");
+		}
+	 state.clear();
+	 for(int j = 0 ; j < re.size() ; j++){
+		 state.addElement(re.get(j));
+	 }
+	 return re;
+ }
 public static ArrayList getblock(Vector initialState){
 	name.clear();
 	hold = "";
-	ArrayList<ArrayList<String>> namelist=new ArrayList<ArrayList<String>>();
+namelist.clear();
 	   for(int i = 0 ; i < initialState.size() ; i++){
 		    String  state = (String)initialState.elementAt(i);	    
 			Pattern pat1 = Pattern.compile("ontable (.+)");
@@ -80,14 +238,19 @@ public static ArrayList getblock(Vector initialState){
 			}
 	   }
 	   }
+		   for(int i= namelist.size();i<name.size();i++){
+			   ArrayList <String> a = new ArrayList<String>();
+			   namelist.add(a);
+		   }
 	return namelist;
 	
 }
-public static void start1(){
+
+public static void start2(String infile ,String goalfile){
 	rand = new Random();
 	  initOperators();
-	  Vector goalList     = initGoalListfile("test.txt");
-	  Vector initialState = initInitialStatefile("state.txt");
+	  Vector goalList     = initGoalListfile(goalfile);
+	  Vector initialState = initInitialStatefile(infile);
 
 	  Hashtable theBinding = new Hashtable();
 	  plan = new Vector();
@@ -100,19 +263,198 @@ public static void start1(){
 	        String value = (String)theBinding.get(key);
 	        re.put(key,value);
 	       }
+	    doplan.clear();
 	   for(int i = 0 ; i < plan.size() ; i++){
 	    Operator op = (Operator)plan.elementAt(i);	    
 	    System.out.println((op.instantiate(theBinding)).name);
 	    doplan.add((op.instantiate(theBinding)).name);
 	   }
 	  }
- 
+public static void restart(String goalfile,Vector list){
+	rand = new Random();
+	  initOperators();
+	  Vector goalList     = initGoalListfile(goalfile);
+	  Vector initialState = list;
+re.clear();
+	  Hashtable theBinding = new Hashtable();
+	  plan = new Vector();
+	  planning(goalList,initialState,theBinding);
+	  System.out.println("***** This is a plan! *****");
+	  //コピー
+	    for(Enumeration e = theBinding.keys() ; e.hasMoreElements();){
+	        String key = (String)e.nextElement();
+	        String value = (String)theBinding.get(key);
+	        re.put(key,value);
+	       }
+	    doplan.clear();
+	   for(int i = 0 ; i < plan.size() ; i++){
+	    Operator op = (Operator)plan.elementAt(i);	    
+	    System.out.println((op.instantiate(theBinding)).name);
+	    doplan.add((op.instantiate(theBinding)).name);
+	   }
+	
+	  }
+public static boolean checkOrder(Vector nowState, String op) {
+    Pattern pat1 = Pattern.compile("Place (.+) on (.+)");
+    Matcher mat1 = pat1.matcher(op);
+    Pattern pat2 = Pattern.compile("remove (.+) from on top (.+)");
+    Matcher mat2 = pat2.matcher(op);
+    Pattern pat3 = Pattern.compile("pick up (.+) from the table");
+    Matcher mat3 = pat3.matcher(op);
+    Pattern pat4 = Pattern.compile("put (.+) down on the table");
+    Matcher mat4 = pat4.matcher(op);
+    if (mat1.find()) {
+        String x = mat1.group(1);
+        String y = mat1.group(2);
+        String check1 = "clear " + y;
+        String check2 = "holding " + x;
+        boolean flag1 = false;
+        boolean flag2 = false;
+        for (int j = 0; j < nowState.size(); j++) {
+            String a = (String) nowState.get(j);
+            if (a.equals(check1)) {
+                flag1 = true;
+            }
+            if (a.equals(check2)) {
+                flag2 = true;
+            }
+        }
+        return flag1 && flag2;
+    } else if (mat2.find()) {
+        String x = mat2.group(1);
+        String y = mat2.group(2);
+        String check1 = x + " on " + y;
+        String check2 = "clear " + x;
+        String check3 = "handEmpty";
+        boolean flag1 = false;
+        boolean flag2 = false;
+        boolean flag3 = false;
+        for (int j = 0; j < nowState.size(); j++) {
+            String a = (String) nowState.get(j);
+            if (a.equals(check1)) {
+                flag1 = true;
+            }
+            if (a.equals(check2)) {
+                flag2 = true;
+            }
+            if (a.equals(check3)) {
+                flag3 = true;
+            }
+        }
+        return flag1 && flag2 && flag3;
+    } else if (mat3.find()) {
+        String x = mat3.group(1);
+        String check1 = "ontable " + x;
+        String check2 = "clear " + x;
+        String check3 = "handEmpty";
+        boolean flag1 = false;
+        boolean flag2 = false;
+        boolean flag3 = false;
+        for (int j = 0; j < nowState.size(); j++) {
+            String a = (String) nowState.get(j);
+            if (a.equals(check1)) {
+                flag1 = true;
+            }
+            if (a.equals(check2)) {
+                flag2 = true;
+            }
+            if (a.equals(check3)) {
+                flag3 = true;
+            }
+        }
+        return flag1 && flag2 && flag3;
+    } else if (mat4.find()) {
+        String x = mat4.group(1);
+        String check1 = "holding " + x;
+        boolean flag1 = false;
+        for (int j = 0; j < nowState.size(); j++) {
+            String a = (String) nowState.get(j);
+            if (a.equals(check1)) {
+                flag1 = true;
+            }
+        }
+        return flag1;
+    }        return false;
+}
+
+
+public static Vector rename(Vector a,Hashtable b){
+Vector re = new Vector();
+	for (int i = 0; i < a.size(); i++) {
+		String op = (String) a.elementAt(i);
+		String memo=Operator.instantiateString(op,b);
+		re.add(memo);
+	}
+	return re;
+}
+
+public static ArrayList<String> changeInitialState(ArrayList<String> initialState, String order) {
+    if (order.startsWith("add")) {
+        order = order.substring(4); // orderから"add"を削除
+//        System.out.println(order);
+        if (!initialState.contains(order)) {
+            initialState.add(order);
+        }
+    } else if (order.startsWith("append")) {
+        order = order.substring(7); // orderから"append"を削除
+//        System.out.println(order);
+        if (!initialState.contains(order)) {
+            initialState.add(order);
+        }
+    } else if (order.startsWith("delete")) {
+        order = order.substring(7); // orderから"delete"を削除
+        if(initialState.contains(order)){
+//        System.out.println(order);
+        initialState.remove(initialState.indexOf(order));
+        }
+    } else if (order.startsWith("remove")) {
+        order = order.substring(7); // orderから"remove"を削除
+        if(initialState.contains(order)){
+//          System.out.println(order);
+          initialState.remove(initialState.indexOf(order));
+          }
+    }
+    System.out.println(initialState);
+    return initialState;
+}
+
+public static ArrayList<String> changeGoalList(ArrayList<String> goalList, String order) {
+    if (order.startsWith("add")) {
+        order = order.substring(4); // orderから"add"を削除
+//        System.out.println(order);
+        if (!goalList.contains(order)) {
+            goalList.add(order);
+        }
+    } else if (order.startsWith("append")) {
+        order = order.substring(7); // orderから"append"を削除
+//        System.out.println(order);
+        if (!goalList.contains(order)) {
+            goalList.add(order);
+        }
+    } else if (order.startsWith("delete")) {
+        order = order.substring(7); // orderから"delete"を削除
+        if(goalList.contains(order)){
+//        System.out.println(order);
+        goalList.remove(goalList.indexOf(order));
+        }
+    } else if (order.startsWith("remove")) {
+        order = order.substring(7); // orderから"remove"を削除
+      if(goalList.contains(order)){
+//  System.out.println(order);
+  goalList.remove(goalList.indexOf(order));
+  }
+    }
+    System.out.println(goalList);
+    return goalList;
+}
+
+
  
  public void start(){
   initOperators();
   Vector goalList     = initGoalListfile("test.txt");
   Vector initialState = initInitialStatefile("state.txt");
-
+state = initInitialStatefile("state.txt");
   Hashtable theBinding = new Hashtable();
   plan = new Vector();
   planning(goalList,initialState,theBinding);
@@ -121,149 +463,167 @@ public static void start1(){
    for(int i = 0 ; i < plan.size() ; i++){
     Operator op = (Operator)plan.elementAt(i);	    
     System.out.println((op.instantiate(theBinding)).name);
+    doplan.add((op.instantiate(theBinding)).name);
    }
   }
 
- private static boolean planning(Vector theGoalList,
-                          Vector theCurrentState,
-                          Hashtable theBinding){
-  System.out.println("*** GOALS ***" + theGoalList);
-  if(theGoalList.size() == 1){
-   String aGoal = (String)theGoalList.elementAt(0);
-   if(planningAGoal(aGoal,theCurrentState,theBinding,0) != -1){
-    return true;
-   } else {
-    return false;
-   }
-  } else {
-   String aGoal = (String)theGoalList.elementAt(0);
-   int cPoint = 0;
-   while(cPoint < operators.size()){
-    //System.out.println("cPoint:"+cPoint);
-    // Store original binding
-    Hashtable orgBinding = new Hashtable();
-    for(Enumeration e = theBinding.keys() ; e.hasMoreElements();){
-     String key = (String)e.nextElement();
-     String value = (String)theBinding.get(key);
-     orgBinding.put(key,value);
-    }
-    Vector orgState = new Vector();
-    for(int i = 0; i < theCurrentState.size() ; i++){
-     orgState.addElement(theCurrentState.elementAt(i));
-    }
+ static int count=0;
+	private static boolean planning(Vector theGoalList,
+			Vector theCurrentState,
+			Hashtable theBinding){
+		count++;
+		if(count>1000){
+			System.out.println("ERROR OCCURED");	
+			System.exit(0);
+		}
+		System.out.println("*** GOALS ***" + theGoalList);
+		if(theGoalList.size() == 1){
+			String aGoal = (String)theGoalList.elementAt(0);
+			if(planningAGoal(aGoal,theCurrentState,theBinding,0) != -1){
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			String aGoal = (String)theGoalList.elementAt(0);
+			int cPoint = 0; //現在のゴールリスト内の探索場所
+			while(cPoint < operators.size()){
+				//System.out.println("cPoint:"+cPoint);
+				// Store original binding
+				Hashtable orgBinding = new Hashtable(); //theBindingのコピーを生成
+				for(Enumeration e = theBinding.keys() ; e.hasMoreElements();){
+					String key = (String)e.nextElement();
+					String value = (String)theBinding.get(key);
+					orgBinding.put(key,value);
+				}
+				Vector orgState = new Vector(); //CurrentStateのコピー
+				for(int i = 0; i < theCurrentState.size() ; i++){
+					orgState.addElement(theCurrentState.elementAt(i));
+				}
 
-    int tmpPoint = planningAGoal(aGoal,theCurrentState,theBinding,cPoint);
-    //System.out.println("tmpPoint: "+tmpPoint);
-    if(tmpPoint != -1){
-     theGoalList.removeElementAt(0);
-     System.out.println(theCurrentState);
-     if(planning(theGoalList,theCurrentState,theBinding)){
-      //System.out.println("Success !");
-      return true;
-     } else {
-      cPoint = tmpPoint;
-      //System.out.println("Fail::"+cPoint);
-      theGoalList.insertElementAt(aGoal,0);
-	  
-      theBinding.clear();
-      for(Enumeration e=orgBinding.keys();e.hasMoreElements();){
-       String key = (String)e.nextElement();
-       String value = (String)orgBinding.get(key);
-       theBinding.put(key,value);
-      }
-      theCurrentState.removeAllElements();
-      for(int i = 0 ; i < orgState.size() ; i++){
-       theCurrentState.addElement(orgState.elementAt(i));
-      }
-     }
-    } else {
-     theBinding.clear();
-     for(Enumeration e=orgBinding.keys();e.hasMoreElements();){
-      String key = (String)e.nextElement();
-      String value = (String)orgBinding.get(key);
-      theBinding.put(key,value);
-     }
-     theCurrentState.removeAllElements();
-     for(int i = 0 ; i < orgState.size() ; i++){
-      theCurrentState.addElement(orgState.elementAt(i));
-     }
-     return false;
-    }
-   }
-   return false;
-  }
- }
+				int tmpPoint = planningAGoal(aGoal,theCurrentState,theBinding,cPoint); //失敗したら-1
+				//				System.out.println("tmpPoint: "+tmpPoint);
 
- private static int planningAGoal(String theGoal,Vector theCurrentState,
-                           Hashtable theBinding,int cPoint){
-  System.out.println("**"+theGoal);
-  int size = theCurrentState.size();
-  for(int i =  0; i < size ; i++){
-   String aState = (String)theCurrentState.elementAt(i);
-   if((new Unifier()).unify(theGoal,aState,theBinding)){
-    return 0;
-   }
-  }
+				if(tmpPoint != -1){
+					theGoalList.removeElementAt(0);
+					System.out.print("theCurrentState:");
+					System.out.println(theCurrentState);
+					if(planning(theGoalList,theCurrentState,theBinding)){
+						//System.out.println("Success !");
+						return true;
+					} else {
+						cPoint = tmpPoint;
+						//System.out.println("Fail::"+cPoint);
+						theGoalList.insertElementAt(aGoal,0);
 
-  int randInt = Math.abs(rand.nextInt()) % operators.size();
-  Operator op = (Operator)operators.elementAt(randInt);
-  operators.removeElementAt(randInt);
-  operators.addElement(op);
+						theBinding.clear();
+						for(Enumeration e=orgBinding.keys();e.hasMoreElements();){
+							String key = (String)e.nextElement();
+							String value = (String)orgBinding.get(key);
+							theBinding.put(key,value);
+						}
+						theCurrentState.removeAllElements();
+						for(int i = 0 ; i < orgState.size() ; i++){
+							theCurrentState.addElement(orgState.elementAt(i));
+						}
+					}
+				} else {
+					theBinding.clear();
+					for(Enumeration e=orgBinding.keys();e.hasMoreElements();){
+						String key = (String)e.nextElement();
+						String value = (String)orgBinding.get(key);
+						theBinding.put(key,value);
+					}
+					theCurrentState.removeAllElements();
+					for(int i = 0 ; i < orgState.size() ; i++){
+						theCurrentState.addElement(orgState.elementAt(i));
+					}
+					return false;
+				}
+//				System.out.println("test:");	
+			}
+			return false;
+		}
+}
 
-  for(int i = cPoint ; i < operators.size() ; i++){
-   Operator anOperator = rename((Operator)operators.elementAt(i));
-   // 現在のCurrent state, Binding, planをbackup
-   Hashtable orgBinding = new Hashtable();
-   for(Enumeration e = theBinding.keys() ; e.hasMoreElements();){
-    String key = (String)e.nextElement();
-    String value = (String)theBinding.get(key);
-    orgBinding.put(key,value);
-   }
-   Vector orgState = new Vector();
-   for(int j = 0; j < theCurrentState.size() ; j++){
-    orgState.addElement(theCurrentState.elementAt(j));
-   }
-   Vector orgPlan = new Vector();
-   for(int j = 0; j < plan.size() ; j++){
-    orgPlan.addElement(plan.elementAt(j));
-   }
+	private static int planningAGoal(String theGoal,Vector theCurrentState,
+			Hashtable theBinding,int cPoint){
+		System.out.println("**"+theGoal);
+		int size = theCurrentState.size();
+		//		System.out.println("StateSize:"+size);
+		for(int i =  0; i < size ; i++){
+			String aState = (String)theCurrentState.elementAt(i); //1つずつマッチング
+			if((new Unifier()).unify(theGoal,aState,theBinding)){
+				return 0;                                          //調査中のゴールが現在の状態にあれば成功
+			}
+		}
+		//なければルールを使って分解する
+		int randInt = Math.abs(rand.nextInt()) % (operators.size()-1);
+		Operator op = (Operator)operators.elementAt(randInt);
+		operators.removeElementAt(randInt);
+		operators.add(2,op);
 
-   Vector addList = (Vector)anOperator.getAddList();
-   for(int j = 0 ; j < addList.size() ; j++){
-    if((new Unifier()).unify(theGoal,
-                             (String)addList.elementAt(j),
-                             theBinding)){
-     Operator newOperator = anOperator.instantiate(theBinding);
-     Vector newGoals = (Vector)newOperator.getIfList();
-     System.out.println(newOperator.name);
-     if(planning(newGoals,theCurrentState,theBinding)){
-      System.out.println(newOperator.name);
-      plan.addElement(newOperator);
-      theCurrentState =
-       newOperator.applyState(theCurrentState);
-      return i+1;
-     } else {
-      // 失敗したら元に戻す．
-      theBinding.clear();
-      for(Enumeration e=orgBinding.keys();e.hasMoreElements();){
-       String key = (String)e.nextElement();
-       String value = (String)orgBinding.get(key);
-       theBinding.put(key,value);
-      }
-      theCurrentState.removeAllElements();
-      for(int k = 0 ; k < orgState.size() ; k++){
-       theCurrentState.addElement(orgState.elementAt(k));
-      }
-      plan.removeAllElements();
-      for(int k = 0 ; k < orgPlan.size() ; k++){
-       plan.addElement(orgPlan.elementAt(k));
-      }
-     }
-    }		
-   }
-  }
-  return -1;
- }
+		for(int i = cPoint ; i < operators.size() ; i++){ //オペレーター全てを回す
+			Operator anOperator = rename((Operator)operators.elementAt(i));
+			// 現在のCurrent state, Binding, planをbackup
+			Hashtable orgBinding = new Hashtable();
+			for(Enumeration e = theBinding.keys() ; e.hasMoreElements();){
+				String key = (String)e.nextElement();
+				String value = (String)theBinding.get(key);
+				orgBinding.put(key,value);
+			}
+			Vector orgState = new Vector();
+			for(int j = 0; j < theCurrentState.size() ; j++){
+				orgState.addElement(theCurrentState.elementAt(j));
+			}
+			Vector orgPlan = new Vector();
+			for(int j = 0; j < plan.size() ; j++){
+				orgPlan.addElement(plan.elementAt(j));
+			}
+
+			Vector addList = (Vector)anOperator.getAddList();   //オペレーターのADDリストを入手
+			for(int j = 0 ; j < addList.size() ; j++){
+				if((new Unifier()).unify(theGoal,               
+						(String)addList.elementAt(j),
+						theBinding)){                            //今のオペレータと今のゴールが一致したら
+					//					System.out.print("Addlistelementat:");
+					//					System.out.println(addList.elementAt(j));
+					//					System.out.println("Cdlistelementat:");
+					//					System.out.println(anOperator);
+					Operator newOperator = anOperator.instantiate(theBinding);
+					//					System.out.println("NewAddlistelementat:");
+					//					System.out.println(newOperator);
+					Vector newGoals = (Vector)newOperator.getIfList();
+					System.out.print("Newname:");
+					System.out.println(newOperator.name);
+					if(planning(newGoals,theCurrentState,theBinding)){    //&checkA(newOperator.name)
+						System.out.print("Ewname:");
+						System.out.println(newOperator.name);
+						plan.addElement(newOperator);
+						theCurrentState =newOperator.applyState(theCurrentState);
+						return i+1;
+					} else {
+						// 失敗したら元に戻す．
+						theBinding.clear();
+						for(Enumeration e=orgBinding.keys();e.hasMoreElements();){
+							String key = (String)e.nextElement();
+							String value = (String)orgBinding.get(key);
+							theBinding.put(key,value);
+						}
+						theCurrentState.removeAllElements();
+						for(int k = 0 ; k < orgState.size() ; k++){
+							theCurrentState.addElement(orgState.elementAt(k));
+						}
+						plan.removeAllElements();
+						for(int k = 0 ; k < orgPlan.size() ; k++){
+							plan.addElement(orgPlan.elementAt(k));
+						}
+					}
+				}		
+			}
+		}
+		return -1;
+}
     
  static int uniqueNum = 0;
  private static Operator rename(Operator theOperator){
@@ -294,7 +654,122 @@ public static void start1(){
 		} catch (IOException e) {
 			e.printStackTrace(); // 例外が発生した所までのスタックトレースを表示
 		}
-	
+  		Vector onGoalList = new Vector();
+		Vector otherList = new Vector();
+		Vector finalGoalList = new Vector();
+
+		for(Object s : goalList)
+		{
+			String str = (String)s;
+			String[] tmp = str.split(" ", 0);
+			if(tmp.length == 3)
+			{
+				onGoalList.addElement(s);
+			}
+			else
+			{
+				otherList.addElement(s);
+			}
+		}
+		boolean handEmpty =false;
+		for (Object s : otherList) {
+			if(Objects.equals("handEmpty",s))
+			{
+				handEmpty=true;
+			}
+		}
+		if(handEmpty)
+			for(Object s : otherList)
+			{
+				String str = (String)s;
+				String[] tmp = str.split(" ", 0);
+				if(Objects.equals("holding",tmp[0]))
+				{
+					System.out.println("ERROR OCCURED");	
+					System.exit(0);
+				}
+			}
+		//System.out.println(onGoalList);
+
+		Map<String, Integer> m = new HashMap<String, Integer>();
+		// Java7以降なら new HashMap<>() でOK
+
+		for (Object s : onGoalList) {
+			String str = (String)s;
+			String[] tmp = str.split(" ", 0);
+			for(String t : tmp){
+
+				int v;
+				if (m.containsKey(t)) {
+					// Mapに登録済み
+					v = m.get(t) + 1;
+				} else {
+					// Mapに未登録
+					v = 1;
+				}
+				m.put((String)t, v);
+			}
+		}
+		//		System.out.println(m);
+		Vector oneList =new Vector();
+		int onecount=0;
+		for (String key : m.keySet()) 
+		{
+			//			System.out.println(m.get(key));
+			if(m.get(key)==1)
+			{
+				oneList.add(key);
+				onecount++;
+			}
+		}
+		if(onecount>2)
+		{
+			System.out.println("ERROR OCCURED");	
+			System.exit(0);
+		}
+		String first = "";
+		String last = "";
+
+		//		System.out.println(oneList);
+		for (Object s : onGoalList) {
+			String str = (String)s;
+			String[] tmp = str.split(" ", 0);
+			if(oneList.indexOf(tmp[2])>-1){
+				finalGoalList.add(s);
+				last = tmp[0];
+				oneList.remove(oneList.indexOf(tmp[2]));
+				first=(String)oneList.get(0);
+			}
+
+		}
+		//		System.out.println("first="+first);
+		//		System.out.println("last="+last);
+		String x="";
+		do{
+			for(Object s : onGoalList)
+			{
+				String str = (String)s;
+				String[] tmp = str.split(" ", 0);
+				//			System.out.println(s);
+				//			System.out.print(tmp[2]+',');
+				//			System.out.println(last);
+
+				if(Objects.equals(tmp[2],last)){
+					finalGoalList.add(s);
+					last = tmp[0];
+					x = tmp[0];
+					//	System.out.println("first="+first);
+					//	System.out.println("last="+last);
+
+				}
+
+			}
+		}while(!Objects.equals(first,x));
+
+		goalList.clear();
+		goalList.addAll(finalGoalList);
+		goalList.addAll(otherList);
+
     	  return goalList;
     	
     }
@@ -370,7 +845,7 @@ public static void start1(){
 	deleteList2.addElement(new String("handEmpty"));
 	Operator operator2 =
 	    new Operator(name2,ifList2,addList2,deleteList2);
-	operators.addElement(operator2);
+
 
 	// OPERATOR 3
 	/// NAME
@@ -409,6 +884,7 @@ public static void start1(){
 	Operator operator4 =
 	    new Operator(name4,ifList4,addList4,deleteList4);
 	operators.addElement(operator4);
+	operators.addElement(operator2);
     }
 }
 
@@ -573,7 +1049,7 @@ class Operator{
 	return new Operator(newName,newIfList,newAddList,newDeleteList);
     }
 
-    private String instantiateString(String thePattern, Hashtable theBinding){
+    public static String instantiateString(String thePattern, Hashtable theBinding){
         String result = new String();
         StringTokenizer st = new StringTokenizer(thePattern);
         for(int i = 0 ; i < st.countTokens();){
@@ -592,7 +1068,7 @@ class Operator{
         return result.trim();
     }
 
-    private boolean var(String str1){
+    private static boolean var(String str1){
         // 先頭が ? なら変数
         return str1.startsWith("?");
     }
