@@ -30,7 +30,7 @@ public class GraphFrame extends JFrame implements ActionListener {
 	static int counter = 0;
 	static ArrayList<ArrayList<String>> namelist = new ArrayList<ArrayList<String>>();
 	static JFrame frame4 = new JFrame();
-	static Vector k = Planner.initInitialStatefile("state.txt");
+	static Vector k;
 	JLabel aslabel = new JLabel("初期状態");
 	JLabel plan = new JLabel("プラン");
 	JTextArea as = new JTextArea(10, 10);
@@ -370,8 +370,8 @@ public class GraphFrame extends JFrame implements ActionListener {
 					counter = 0;
 					String filename1 = rulefilename.getText();
 					Planner.restart(filename1, Planner.state);
-					Planner.state =memory;
-					//System.out.println(Planner.state);
+					Planner.state = memory;
+					// System.out.println(Planner.state);
 					Img.setText("");
 					for (int i = 0; i < Planner.plan.size(); i++) {
 						Operator op = (Operator) Planner.plan.elementAt(i);
@@ -462,10 +462,17 @@ public class GraphFrame extends JFrame implements ActionListener {
 					Planner.start2(filename, filename1);
 					Planner.state = Planner.initInitialStatefile(filename);
 					Planner.getblock(Planner.state);
+					Img.setText("");
+					for (int i = 0; i < Planner.plan.size(); i++) {
+						Operator op = (Operator) Planner.plan.elementAt(i);
+						Img.append((String) op.instantiate(Planner.re).name
+								+ "\n");
+					}
 					Searchplus app = new Searchplus();
 					JScrollPane a = new JScrollPane(app);
 					a.setBounds(1000, 1000, 1000, 1000);
-					;
+					frame4.setVisible(false);
+					frame4 = new JFrame();
 					frame4.add(a);
 					frame4.add(move, BorderLayout.NORTH);
 					frame4.pack();
