@@ -1,8 +1,7 @@
-clear B
-clear C
-ontable C
-ontable D
-B on D
-holding E
-ontable A
 clear A
+clear B
+ontable A
+ontable B
+holding C
+ontable D
+clear D
