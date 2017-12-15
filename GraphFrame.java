@@ -279,13 +279,44 @@ public class GraphFrame extends JFrame implements ActionListener {
 			if (asfilename.getText().equals("")
 					|| rulefilename.getText().equals("")) {
 			} else {
+				try{
 				String filename = asfilename.getText();
 				String filename1 = rulefilename.getText();
+				BufferedReader in = new BufferedReader(
+						new InputStreamReader(
+								new FileInputStream(filename), "UTF-8"));
+				aslist.clear();
+				for (String line = in.readLine(); line != null; line = in
+						.readLine()) {
+					aslist.add(line);
+				}
+				as.setText("");
+				for (String str : aslist) {
+					System.out.println(str);
+					as.append(str + "\n");
+				}
+				BufferedReader in1 = new BufferedReader(
+						new InputStreamReader(
+								new FileInputStream(filename1), "UTF-8"));
+				rulelist.clear();
+				for (String line = in1.readLine(); line != null; line = in1
+						.readLine()) {
+					rulelist.add(line);
+				}
+				rule.setText("");
+				for (String s : rulelist) {
+					rule.append(s + "\n");
+				}
 				Planner.start2(filename, filename1);
 				Img.setText("");
 				for (int i = 0; i < Planner.plan.size(); i++) {
 					Operator op = (Operator) Planner.plan.elementAt(i);
 					Img.append((String) op.instantiate(Planner.re).name + "\n");
+				}
+				}
+				catch (IOException e) {
+					error.setText("File is not exist");
+					dialog.setVisible(true);
 				}
 			}
 		} else if (event.getSource() == Go) {
@@ -459,6 +490,19 @@ public class GraphFrame extends JFrame implements ActionListener {
 						System.out.println(str);
 						as.append(str + "\n");
 					}
+					BufferedReader in1 = new BufferedReader(
+							new InputStreamReader(
+									new FileInputStream(filename1), "UTF-8"));
+					rulelist.clear();
+					for (String line = in1.readLine(); line != null; line = in1
+							.readLine()) {
+						rulelist.add(line);
+					}
+					rule.setText("");
+					for (String s : rulelist) {
+						rule.append(s + "\n");
+					}
+
 					Planner.start2(filename, filename1);
 					Planner.state = Planner.initInitialStatefile(filename);
 					Planner.getblock(Planner.state);
