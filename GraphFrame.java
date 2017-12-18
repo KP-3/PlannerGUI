@@ -228,7 +228,7 @@ public class GraphFrame extends JFrame implements ActionListener {
 	public void actionPerformed(ActionEvent event) {
 		if (event.getSource() == rulesave) {
 			if (rulefilename.getText().equals("")) {
-				error.setText("Please write rulelist-filename");
+				error.setText("Please write filename");
 				dialog.setVisible(true);
 			} else {
 				try {
@@ -444,7 +444,7 @@ public class GraphFrame extends JFrame implements ActionListener {
 			}
 		} else if (event.getSource() == asload) {
 			if (asfilename.getText().equals("")) {
-				error.setText("Please write assertionlist-filename");
+				error.setText("Please write filename");
 				dialog.setVisible(true);
 			} else {
 				try {
