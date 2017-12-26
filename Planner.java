@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -20,14 +18,18 @@ public class Planner {
 	static Random rand;
 	static Vector plan;
 	static String hold;
+	static HashMap<String, ArrayList<String>> colors = new HashMap<String, ArrayList<String>>();
+	static HashMap<String, ArrayList<String>> blockform = new HashMap<String, ArrayList<String>>();
 	static ArrayList<String> doplan = new ArrayList<String>();
 	static Hashtable re = new Hashtable();
 	static ArrayList<String> name = new ArrayList<String>();
 	static ArrayList<ArrayList<String>> namelist = new ArrayList<ArrayList<String>>();
 
 	public static void main(String argv[]) {
-		(new Planner()).start();/*
-								 * Vector c =initInitialStatefile("state.txt");
+		//(new Planner()).start();
+		initGoalListfile("test.txt");
+		/*	
+		* Vector c =initInitialStatefile("state.txt");
 								 * for(int i= 0;i<10;i++){ Vector b =
 								 * plandoing(doplan.get(i),c);
 								 * System.out.println(doplan.get(i));
@@ -379,29 +381,31 @@ public class Planner {
 		}
 		return false;
 	}
-    /////////////////////////////////////////////////////////////
 
-    //新たに追加したメソッド
+	/////////////////////////////////////////////////////////////
 
-    //競合解消
+	//新たに追加したメソッド
 
-    /////////////////////////////////////////////////////////////
+	//競合解消
 
- public static void ConfRes0(Vector<Operator> operators,String thegoal,Hashtable theBinding){
-	  for (int i=0;i<operators.size();i++){
-	      Hashtable fbind = new Hashtable();
-	      for(String add: operators.elementAt(i).addList){
-	              if ((new Unifier()).unify(add, thegoal,theBinding)) {
-	        	    Operator op = operators.elementAt(i);
-	              operators.removeElementAt(i);
-	              operators.add(0,op);
-//	              System.out.println(fbind);
-//	              break;
+	/////////////////////////////////////////////////////////////
 
-	          }
-	      }
-	  }  
- }
+	public static void ConfRes0(Vector<Operator> operators, String thegoal, Hashtable theBinding) {
+		for (int i = 0; i < operators.size(); i++) {
+			Hashtable fbind = new Hashtable();
+			for (String add : operators.elementAt(i).addList) {
+				if ((new Unifier()).unify(add, thegoal, theBinding)) {
+					Operator op = operators.elementAt(i);
+					operators.removeElementAt(i);
+					operators.add(0, op);
+					//	              System.out.println(fbind);
+					//	              break;
+
+				}
+			}
+		}
+	}
+
 	public static Vector rename(Vector a, Hashtable b) {
 		Vector re = new Vector();
 		for (int i = 0; i < a.size(); i++) {
@@ -476,8 +480,12 @@ public class Planner {
 
 	public void start() {
 		initOperators();
-		Vector goalList = initGoalListfile("test.txt");
+		Vector goalList = initGoalListfile("goal.txt");
 		Vector initialState = initInitialStatefile("state.txt");
+		System.out.println("aaaaa" + initialState);
+		initialState = changeinitalState(initialState);
+		System.out.println("aaaaa" + initialState);
+		System.out.println("aaaaa" + blockform);
 		state = initInitialStatefile("state.txt");
 		Hashtable theBinding = new Hashtable();
 		plan = new Vector();
@@ -584,7 +592,7 @@ public class Planner {
 			}
 		}
 		// なければルールを使って分解する
-		 ConfRes0(operators,theGoal,theBinding);
+		ConfRes0(operators, theGoal, theBinding);
 		for (int i = cPoint; i < operators.size(); i++) { // オペレーター全てを回す
 			Operator anOperator = rename((Operator) operators.elementAt(i));
 			// 現在のCurrent state, Binding, planをbackup
@@ -620,7 +628,7 @@ public class Planner {
 					if (planning(newGoals, theCurrentState, theBinding)) { // &checkA(newOperator.name)
 						System.out.print("Ewname:");
 						System.out.println(newOperator.name);
-						 newOperator = newOperator.instantiate(theBinding);
+						newOperator = newOperator.instantiate(theBinding);
 						plan.addElement(newOperator);
 						theCurrentState = newOperator
 								.applyState(theCurrentState);
@@ -664,6 +672,103 @@ public class Planner {
 		return goalList;
 	}
 
+	public static Vector chengegoal(Vector goal) {
+		Vector goalList = new Vector();
+		HashMap<String, Integer> name = new HashMap<String, Integer>();
+		HashMap<String, String> blocks = new HashMap<String, String>();
+		String holding="";
+		for (int j = 0; j < goal.size(); j++) {
+			String a = (String) goal.get(j);
+			Pattern pat1 = Pattern.compile("holding (.+)");
+			Matcher mat1 = pat1.matcher(a);
+			Pattern pat2 = Pattern.compile("(.+) on (.+)");
+			Matcher mat2 = pat2.matcher(a);
+			if (mat1.find()) {
+				holding=a;
+			}
+			if (mat2.find()) {
+				String x = mat2.group(1);
+				String y = mat2.group(2);
+				blocks.put(y, x);
+				if (name.containsKey(x)) {
+					int num = name.get(x);
+					num++;
+					name.put(x, num);
+				}
+				else {
+					name.put(x, 1);
+				}
+				if (name.containsKey(y)) {
+					int num = name.get(y);
+					num++;
+					name.put(y, num);
+				}
+				else {
+					name.put(y, 1);
+				}
+			}
+			else{
+				goalList.addElement(a);
+			
+			}
+		}
+		System.out.println(name);
+		System.out.println(goal);
+		while (true) {
+			boolean flag = true;
+			for (int j = 0; j < goal.size(); j++) {
+				String a = (String) goal.get(j);
+				Pattern pat2 = Pattern.compile("(.+) on (.+)");
+				Matcher mat2 = pat2.matcher(a);
+				if (mat2.find()) {
+					String x = mat2.group(1);
+					String y = mat2.group(2);
+					int s = name.get(y);
+					if (s == 1) {
+						flag = false;
+						goalList.addElement(a);
+						int num = name.get(y);
+						num--;
+						name.put(y, num);
+						num = name.get(x);
+						num--;
+						name.put(x, num);
+						System.out.println(name);
+						if (num == 1) {
+							while (true) {
+								if (blocks.containsKey(x)) {
+									num=name.get(x);
+									num--;
+									name.put(x,num);
+									String b = blocks.get(x);
+									num=name.get(b);
+									num--;
+									name.put(b,num);
+									String plus=b+" on " + x;
+									goalList.addElement(plus);
+									System.out.println(name);
+									x=b;
+								}
+								else {
+									break;
+								}
+							}
+						}
+					}
+
+				}
+			}
+			if (flag) {
+				break;
+			}
+		}
+		if(!holding.equals("")){
+			goalList.addElement(holding);
+		}
+		System.out.println("result" +goalList);
+		return goalList;
+	}
+
 	public static Vector initGoalListfile(String fileName) {
 		Vector goalList = new Vector();
 		try { // ファイル読み込みに失敗した時の例外処理のためのtry-catch構文
@@ -680,112 +785,52 @@ public class Planner {
 		} catch (IOException e) {
 			e.printStackTrace(); // 例外が発生した所までのスタックトレースを表示
 		}
-		Vector onGoalList = new Vector();
-		Vector otherList = new Vector();
-		Vector finalGoalList = new Vector();
-
-		for (Object s : goalList) {
-			String str = (String) s;
-			String[] tmp = str.split(" ", 0);
-			if (tmp.length == 3) {
-				onGoalList.addElement(s);
-			} else {
-				otherList.addElement(s);
-			}
-		}
-		boolean handEmpty = false;
-		for (Object s : otherList) {
-			if (Objects.equals("handEmpty", s)) {
-				handEmpty = true;
-			}
-		}
-		if (handEmpty)
-			for (Object s : otherList) {
-				String str = (String) s;
-				String[] tmp = str.split(" ", 0);
-				if (Objects.equals("holding", tmp[0])) {
-					System.out.println("ERROR OCCURED");
-					System.exit(0);
-				}
-			}
-		// System.out.println(onGoalList);
-
-		Map<String, Integer> m = new HashMap<String, Integer>();
-		// Java7以降なら new HashMap<>() でOK
-
-		for (Object s : onGoalList) {
-			String str = (String) s;
-			String[] tmp = str.split(" ", 0);
-			for (String t : tmp) {
-
-				int v;
-				if (m.containsKey(t)) {
-					// Mapに登録済み
-					v = m.get(t) + 1;
-				} else {
-					// Mapに未登録
-					v = 1;
-				}
-				m.put((String) t, v);
-			}
-		}
-		// System.out.println(m);
-		Vector oneList = new Vector();
-		int onecount = 0;
-		for (String key : m.keySet()) {
-			// System.out.println(m.get(key));
-			if (m.get(key) == 1) {
-				oneList.add(key);
-				onecount++;
-			}
-		}
-		if (onecount > 2) {
-			System.out.println("ERROR OCCURED");
-			System.exit(0);
-		}
-		String first = "";
-		String last = "";
-
-		// System.out.println(oneList);
-		for (Object s : onGoalList) {
-			String str = (String) s;
-			String[] tmp = str.split(" ", 0);
-			if (oneList.indexOf(tmp[2]) > -1) {
-				finalGoalList.add(s);
-				last = tmp[0];
-				oneList.remove(oneList.indexOf(tmp[2]));
-				first = (String) oneList.get(0);
-			}
-
-		}
-		// System.out.println("first="+first);
-		// System.out.println("last="+last);
-		String x = "";
-		do {
-			for (Object s : onGoalList) {
-				String str = (String) s;
-				String[] tmp = str.split(" ", 0);
-				// System.out.println(s);
-				// System.out.print(tmp[2]+',');
-				// System.out.println(last);
-
-				if (Objects.equals(tmp[2], last)) {
-					finalGoalList.add(s);
-					last = tmp[0];
-					x = tmp[0];
-					// System.out.println("first="+first);
-					// System.out.println("last="+last);
-
-				}
-
-			}
-		} while (!Objects.equals(first, x));
-
-		goalList.clear();
-		goalList.addAll(finalGoalList);
-		goalList.addAll(otherList);
-
+		goalList=chengegoal(goalList);
 		return goalList;
+
+	}
+
+	public static Vector changeinitalState(Vector now) {
+		Vector initialState = new Vector();
+		for (int j = 0; j < now.size(); j++) {
+			String a = (String) now.get(j);
+			Pattern pat1 = Pattern.compile("(.+)'s color is (.+)");
+			Matcher mat1 = pat1.matcher(a);
+			Pattern pat2 = Pattern.compile("(.+) is (.+)");
+			Matcher mat2 = pat2.matcher(a);
+			if (mat1.find()) {
+				String x = mat1.group(1);
+				String color = mat1.group(2);
+				if (colors.containsKey(color)) {
+					ArrayList<String> plus = colors.get(color);
+					plus.add(x);
+					colors.put(color, plus);
+				}
+				else {
+					ArrayList<String> plus = new ArrayList<String>();
+					plus.add(x);
+					colors.put(color, plus);
+				}
+			}
+			else if (mat2.find()) {
+				String x = mat2.group(1);
+				String block = mat2.group(2);
+				if (blockform.containsKey(block)) {
+					ArrayList<String> plus = blockform.get(block);
+					plus.add(x);
+					blockform.put(block, plus);
+				}
+				else {
+					ArrayList<String> plus = new ArrayList<String>();
+					plus.add(x);
+					blockform.put(block, plus);
+				}
+			}
+			else {
+				initialState.addElement(a);
+			}
+		}
+		return initialState;
 
 	}
 
