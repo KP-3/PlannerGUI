@@ -308,6 +308,10 @@ public class GraphFrame extends JFrame implements ActionListener {
 					rule.append(s + "\n");
 				}
 				Planner.start2(filename, filename1);
+				Planner.state = Planner.initInitialStatefile2(filename);
+				Planner.getblock(Planner.state);
+				Planner.makemovefile();
+				Planner.makeblockfile();
 				Img.setText("");
 				for (int i = 0; i < Planner.plan.size(); i++) {
 					Operator op = (Operator) Planner.plan.elementAt(i);
@@ -504,8 +508,10 @@ public class GraphFrame extends JFrame implements ActionListener {
 					}
 
 					Planner.start2(filename, filename1);
-					Planner.state = Planner.initInitialStatefile(filename);
+					Planner.state = Planner.initInitialStatefile2(filename);
 					Planner.getblock(Planner.state);
+					Planner.makemovefile();
+					Planner.makeblockfile();
 					Img.setText("");
 					for (int i = 0; i < Planner.plan.size(); i++) {
 						Operator op = (Operator) Planner.plan.elementAt(i);
