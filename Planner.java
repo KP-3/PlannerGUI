@@ -1,7 +1,10 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -17,7 +20,7 @@ public class Planner {
 	static Vector operators;
 	static Random rand;
 	static Vector plan;
-	static String hold;
+	static String hold="";
 	static HashMap<String, ArrayList<String>> colors = new HashMap<String, ArrayList<String>>();
 	static HashMap<String, ArrayList<String>> blockform = new HashMap<String, ArrayList<String>>();
 	static ArrayList<String> doplan = new ArrayList<String>();
@@ -29,13 +32,118 @@ public class Planner {
 
 	public static void main(String argv[]) {
 		(new Planner()).start2("state.txt", "test.txt");
+
+		getblock(changeinitalState(initInitialStatefile2("state.txt")));
+		System.out.println(namelist);
+		makeblockfile();
 		//initGoalListfile("test.txt");
+		makemovefile();
+System.out.println(doplan);
 	}
 
 	Planner() {
 		rand = new Random();
 	}
 
+	public static  void makeblockfile(){
+		try {
+			String filename = "blockstate.txt";
+			BufferedWriter in = new BufferedWriter(
+					new OutputStreamWriter(new FileOutputStream(
+							filename), "UTF-8"));
+			int i = namelist.size();
+			if(!hold.equals("")){
+				in.write(hold);
+				in.newLine();
+			}
+			for (int j = 0; j < i; j++) {
+				ArrayList<String> nameline = namelist.get(j);
+				if(nameline.size()!=0){
+				int num=0;
+				for (String s : nameline) {
+					in.write(s);
+					if(num==nameline.size()-1){
+
+					}
+					else{
+						in.write(" ");
+					}
+					num++;
+				}
+
+				in.newLine();
+				}
+			}
+			in.close();
+		} catch (IOException e) {
+		}
+
+	}
+	public static void makemovefile(){
+		try {
+			String filename = "move.txt";
+			String x=doplan.get(doplan.size()-1);
+			BufferedWriter in = new BufferedWriter(
+					new OutputStreamWriter(new FileOutputStream(
+							filename), "UTF-8"));
+
+			Pattern pat5 = Pattern.compile("remove (.+) from on top (.+)");
+			Matcher mat5 = pat5.matcher(x);
+			Pattern pat6 = Pattern.compile("pick up (.+) from the table");
+			Matcher mat6 = pat6.matcher(x);
+			if(mat5.find()||mat6.find()){
+				if(hold.equals("")){
+					in.write("3");
+					in.newLine();
+				}
+				else{
+					in.write("1");
+					in.newLine();
+				}
+			}
+			else{
+				if(hold.equals("")){
+					in.write("4");
+					in.newLine();
+				}
+				else{
+					in.write("2");
+					in.newLine();
+				}
+			}
+			ArrayList<String> move= new ArrayList<String>();
+
+				for (String s : doplan) {
+					String a="";
+					Pattern pat1 = Pattern.compile("Place (.+) on (.+)");
+					Matcher mat1 = pat1.matcher(s);
+					Pattern pat2 = Pattern.compile("remove (.+) from on top (.+)");
+					Matcher mat2 = pat2.matcher(s);
+					Pattern pat3 = Pattern.compile("pick up (.+) from the table");
+					Matcher mat3 = pat3.matcher(s);
+					Pattern pat4 = Pattern.compile("put (.+) down on the table");
+					Matcher mat4 = pat4.matcher(s);
+					if(mat1.find()){
+						a=mat1.group(2);
+					}
+					else if(mat2.find()){
+						a=mat2.group(1);
+					}
+					else if(mat3.find()){
+						a=mat3.group(1);
+					}
+					else if(mat4.find()){
+						a="table";
+					}
+					in.write(a);
+					in.newLine();
+				}
+			in.close();
+		} catch (IOException e) {
+
+		}
+
+	}
 	public static Vector plandoing(String plan1, Vector now) {
 		Vector re = new Vector();
 		Pattern pat1 = Pattern.compile("Place (.+) on (.+)");
@@ -236,6 +344,7 @@ public class Planner {
 			ArrayList<String> a = new ArrayList<String>();
 			namelist.add(a);
 		}
+
 		return namelist;
 
 	}
@@ -678,7 +787,7 @@ public class Planner {
 			if (mat1.find()) {
 				holding = a;
 			}
-			if (mat2.find()) {
+			else if (mat2.find()) {
 				String x = mat2.group(1);
 				String y = mat2.group(2);
 				blocks.put(y, x);
@@ -763,6 +872,8 @@ public class Planner {
 
 	public static Vector initGoalListfile(String fileName) {
 		Vector goalList = new Vector();
+		Vector goalList1 = new Vector();
+
 		try { // ファイル読み込みに失敗した時の例外処理のためのtry-catch構文
 
 			// 文字コードを指定してBufferedReaderオブジェクトを作る
@@ -771,13 +882,40 @@ public class Planner {
 			// 変数lineに1行ずつ読み込むfor文
 			for (String line = in.readLine(); line != null; line = in
 					.readLine()) {
-				goalList.addElement(line);
+				Pattern pat1 = Pattern.compile("holding (.+)");
+				Matcher mat1 = pat1.matcher(line);
+				Pattern pat2 = Pattern.compile("(.+) on (.+)");
+				Matcher mat2 = pat2.matcher(line);
+				if (mat1.find()) {
+					String x = mat1.group(1);
+					if( Character.isUpperCase( x.charAt( 0 ) ) ) {
+						goalList.addElement(line);
+					}
+					else {
+
+						goalList1.addElement(line);
+					}
+				}
+				if (mat2.find()) {
+					String x = mat2.group(1);
+					String y = mat2.group(2);
+					if( Character.isUpperCase( x.charAt( 0 ) )&& Character.isUpperCase( y.charAt( 0 ) ) ) {
+						goalList.addElement(line);
+					}
+					else {
+						goalList1.addElement(line);
+					}
+				}
+
 			}
 
 		} catch (IOException e) {
 			e.printStackTrace(); // 例外が発生した所までのスタックトレースを表示
 		}
+
+
 		goalList = chengegoal(goalList);
+		System.out.println(goalList1);
 		return goalList;
 
 	}
@@ -858,7 +996,7 @@ public class Planner {
 		}
 		return initialState;
 	}
-	
+
 	public static Vector initInitialStatefile2(String fileName) {
 		Vector initialState = new Vector();
 
