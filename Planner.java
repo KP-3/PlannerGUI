@@ -33,12 +33,12 @@ public class Planner {
 	public static void main(String argv[]) {
 		(new Planner()).start2("state.txt", "test.txt");
 
-		getblock(changeinitalState(initInitialStatefile2("state.txt")));
-		System.out.println(namelist);
-		makeblockfile();
+		//getblock(changeinitalState(initInitialStatefile2("state.txt")));
+		//System.out.println(namelist);
+		//makeblockfile();
 		//initGoalListfile("test.txt");
-		makemovefile();
-System.out.println(doplan);
+		//makemovefile();
+//System.out.println(doplan);
 	}
 
 	Planner() {
@@ -82,11 +82,10 @@ System.out.println(doplan);
 	public static void makemovefile(){
 		try {
 			String filename = "move.txt";
-			String x=doplan.get(doplan.size()-1);
 			BufferedWriter in = new BufferedWriter(
 					new OutputStreamWriter(new FileOutputStream(
 							filename), "UTF-8"));
-
+			String x=doplan.get(doplan.size()-1);
 			Pattern pat5 = Pattern.compile("remove (.+) from on top (.+)");
 			Matcher mat5 = pat5.matcher(x);
 			Pattern pat6 = Pattern.compile("pick up (.+) from the table");
@@ -111,8 +110,6 @@ System.out.println(doplan);
 					in.newLine();
 				}
 			}
-			ArrayList<String> move= new ArrayList<String>();
-
 				for (String s : doplan) {
 					String a="";
 					Pattern pat1 = Pattern.compile("Place (.+) on (.+)");
@@ -353,6 +350,7 @@ System.out.println(doplan);
 		rand = new Random();
 		initOperators();
 		Vector goalList = initGoalListfile(goalfile);
+		System.out.println(goalList);
 		Vector initialState = initInitialStatefile(infile);
 		cr = new ConflictResolution(operators);
 		Hashtable theBinding = new Hashtable();
@@ -774,6 +772,7 @@ System.out.println(doplan);
 	}
 
 	public static Vector chengegoal(Vector goal) {
+		System.out.println(goal);
 		Vector goalList = new Vector();
 		HashMap<String, Integer> name = new HashMap<String, Integer>();
 		HashMap<String, String> blocks = new HashMap<String, String>();
@@ -813,8 +812,8 @@ System.out.println(doplan);
 
 			}
 		}
-		System.out.println(name);
-		System.out.println(goal);
+		//System.out.println(name);
+		//System.out.println(goal);
 		while (true) {
 			boolean flag = true;
 			for (int j = 0; j < goal.size(); j++) {
@@ -834,7 +833,7 @@ System.out.println(doplan);
 						num = name.get(x);
 						num--;
 						name.put(x, num);
-						System.out.println(name);
+						//System.out.println(name);
 						if (num == 1) {
 							while (true) {
 								if (blocks.containsKey(x)) {
@@ -847,7 +846,7 @@ System.out.println(doplan);
 									name.put(b, num);
 									String plus = b + " on " + x;
 									goalList.addElement(plus);
-									System.out.println(name);
+									//System.out.println(name);
 									x = b;
 								}
 								else {
@@ -882,40 +881,16 @@ System.out.println(doplan);
 			// 変数lineに1行ずつ読み込むfor文
 			for (String line = in.readLine(); line != null; line = in
 					.readLine()) {
-				Pattern pat1 = Pattern.compile("holding (.+)");
-				Matcher mat1 = pat1.matcher(line);
-				Pattern pat2 = Pattern.compile("(.+) on (.+)");
-				Matcher mat2 = pat2.matcher(line);
-				if (mat1.find()) {
-					String x = mat1.group(1);
-					if( Character.isUpperCase( x.charAt( 0 ) ) ) {
-						goalList.addElement(line);
-					}
-					else {
 
-						goalList1.addElement(line);
-					}
-				}
-				if (mat2.find()) {
-					String x = mat2.group(1);
-					String y = mat2.group(2);
-					if( Character.isUpperCase( x.charAt( 0 ) )&& Character.isUpperCase( y.charAt( 0 ) ) ) {
 						goalList.addElement(line);
-					}
-					else {
-						goalList1.addElement(line);
-					}
-				}
-
 			}
-
-		} catch (IOException e) {
+		}
+		 catch (IOException e) {
 			e.printStackTrace(); // 例外が発生した所までのスタックトレースを表示
 		}
 
 
 		goalList = chengegoal(goalList);
-		System.out.println(goalList1);
 		return goalList;
 
 	}
